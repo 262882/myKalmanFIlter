@@ -73,10 +73,9 @@ class MyKalmanFilterMultivariate:
         
     def _correct(self, yt_measure):
         #print("Correct")
-        self.k_gain = self.Pt_intr@self.H_measure.T@np.linalg.inv(self.H_measure@self.Pt_intr@self.H_measure.T+self.r_noise)
+        self.k_gain = self.Pt_intr@self.H_measure.T/(self.H_measure@self.Pt_intr@self.H_measure.T+self.r_noise)
         self.xt_curr = self.xt_intr + self.k_gain*(yt_measure-self.H_measure@self.xt_intr)
-        KH = self.k_gain@self.H_measure
-        self.Pt_curr = (np.eye(KH.shape())-KH)@self.Pt_intr
+        self.Pt_curr = (1-self.k_gain@self.H_measure)*self.Pt_intr
     
     def step(self, measurement: np.ndarray):
         #print("Step")
