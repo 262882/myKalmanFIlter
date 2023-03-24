@@ -1,6 +1,6 @@
 import numpy as np
 
-class MyKalmanFilterUnivariate:
+class MyKalmanFilterZeroOrder:
     def __init__(self, xt_init: float, Pt_init: float, R: float, Q: float):
         
         #print("Initialise model")
@@ -40,7 +40,7 @@ class MyKalmanFilterUnivariate:
         self._predict()
         self._correct(measurement)
 
-class MyKalmanFilterMultivariate:
+class MyKalmanFilterHigherOrder:
     def __init__(self, xt_init: np.ndarray, Pt_init: np.ndarray, R: np.ndarray, Q: np.ndarray, F: np.ndarray, H: np.ndarray):
         
         #print("Initialise model")
