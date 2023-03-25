@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 class MyKalmanFilterZeroOrder:
     def __init__(self, xt_init: float, Pt_init: float, R: float, Q: float):
@@ -84,4 +85,21 @@ class MyKalmanFilterHigherOrder:
         self._predict()
         self._correct(measurement)
         
+def run_filter(k_filter, measurements):
+    xt_intr_list = []
+    Pt_intr_list = []
+    k_gain_list = []
+    xt_curr_list = []
+    Pt_curr_list = []
+
+    for item in measurements:
+        k_filter.step(item);
         
+        xt_intr_list.append(k_filter.xt_intr)
+        Pt_intr_list.append(k_filter.Pt_intr)
+        k_gain_list.append(k_filter.k_gain)
+        xt_curr_list.append(k_filter.xt_curr)
+        Pt_curr_list.append(k_filter.Pt_curr)
+        
+    list_of_lists = [xt_intr_list,Pt_intr_list,k_gain_list,xt_curr_list,Pt_curr_list]
+    return pd.DataFrame(list(zip(*list_of_lists)), columns= ['xt_intr','Pt_intr','k_gain','xt_curr','Pt_curr'])
