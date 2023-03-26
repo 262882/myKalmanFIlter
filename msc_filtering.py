@@ -42,7 +42,7 @@ class MyKalmanFilterZeroOrder:
         self._correct(measurement)
 
 class MyKalmanFilterHigherOrder:
-    def __init__(self, xt_init: np.ndarray, Pt_init: np.ndarray, R: np.ndarray, Q: np.ndarray, F: np.ndarray, H: np.ndarray):
+    def __init__(self, xt_init: np.ndarray, Pt_init: np.ndarray, R: np.ndarray, Q: np.ndarray, F: np.ndarray, H: np.ndarray, B: np.ndarray = np.zeros(1), u: np.ndarray = np.zeros(1)):
         
         #print("Initialise model")
         
@@ -63,13 +63,17 @@ class MyKalmanFilterHigherOrder:
         # Process model
         self.F_trans = F  # State transition matrix
         self.H_measure = H  # Measurement matrix
+
+        # Control model
+        self.B_control = B  # Control input matrix
+        self.u_input = u  # Control vector
         
         # Kalman gain
         self.k_gain = np.empty_like(Pt_init)
     
     def _predict(self):
         #print("Predict")
-        self.xt_intr = self.F_trans@self.xt_prev
+        self.xt_intr = self.F_trans@self.xt_prev + self.B_control@self.u_input
         self.Pt_intr = self.F_trans@self.Pt_prev@self.F_trans.T + self.q_noise
         
     def _correct(self, yt_measure):
