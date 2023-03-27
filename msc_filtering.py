@@ -92,7 +92,7 @@ class MyKalmanFilterHigherOrder:
         self._correct(measurement)
 
 class MyKalmanFilterEKF:
-    def __init__(self, xt_init: np.ndarray, Pt_init: np.ndarray, R: np.ndarray, Q: np.ndarray, F: np.ndarray, H: np.ndarray,
+    def __init__(self, xt_init: np.ndarray, Pt_init: np.ndarray, R: np.ndarray, Q: np.ndarray, F: Callable, H: Callable,
                   f: Callable, h: Callable, B: np.ndarray = np.zeros(1), u: np.ndarray = np.zeros(1)):
         
         #print("Initialise model")
@@ -126,14 +126,14 @@ class MyKalmanFilterEKF:
     
     def _predict(self):
         #print("Predict")
-        self.xt_intr = self.f_model(self.xt_prev + self.u_input)
-        self.Pt_intr = self.F_trans@self.Pt_prev@self.F_trans.T + self.q_noise
+        self.xt_intr = self.f_model(self.xt_prev, self.u_input)
+        self.Pt_intr = self.F_trans(self.xt_intr)@self.Pt_prev@self.F_trans(self.xt_intr).T + self.q_noise
         
     def _correct(self, yt_measure):  
         #print("Correct")
-        self.k_gain = self.Pt_intr@self.H_measure.T/(self.H_measure@self.Pt_intr@self.H_measure.T+self.r_noise)
+        self.k_gain = self.Pt_intr@self.H_measure(self.xt_intr).T/(self.H_measure(self.xt_intr)@self.Pt_intr@self.H_measure(self.xt_intr).T+self.r_noise)
         self.xt_curr = self.xt_intr + self.k_gain*(yt_measure-self.h_model(self.xt_intr))
-        self.Pt_curr = (1-self.k_gain@self.H_measure)*self.Pt_intr
+        self.Pt_curr = (1-self.k_gain@self.H_measure(self.xt_intr))*self.Pt_intr
     
     def step(self, measurement: np.ndarray):
         #print("Step")
