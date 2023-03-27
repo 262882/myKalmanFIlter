@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Callable
+import time
 
 class MyKalmanFilterZeroOrder:
     def __init__(self, xt_init: float, Pt_init: float, R: float, Q: float):
@@ -141,14 +142,17 @@ class MyKalmanFilterEKF:
         self._predict()
         self._correct(measurement)
 
-def run_filter(k_filter, measurements):
+def run_filter(k_filter, measurements, timing=False):
     xt_intr_list = []
     Pt_intr_list = []
     k_gain_list = []
     xt_curr_list = []
     Pt_curr_list = []
 
-    for item in measurements:
+    
+    time_start = time.perf_counter()
+
+    for cnt, item in enumerate(measurements):
         k_filter.step(item);
         
         xt_intr_list.append(k_filter.xt_intr)
@@ -156,6 +160,10 @@ def run_filter(k_filter, measurements):
         k_gain_list.append(k_filter.k_gain)
         xt_curr_list.append(k_filter.xt_curr)
         Pt_curr_list.append(k_filter.Pt_curr)
+
+    if timing == True:
+        speed = cnt/(time.perf_counter()-time_start)
+        print('Frequency: ', speed, "Per second")
         
     list_of_lists = [xt_intr_list,Pt_intr_list,k_gain_list,xt_curr_list,Pt_curr_list]
     return pd.DataFrame(list(zip(*list_of_lists)), columns= ['xt_intr','Pt_intr','k_gain','xt_curr','Pt_curr'])
