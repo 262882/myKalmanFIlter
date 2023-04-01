@@ -25,6 +25,6 @@ def gen_dataset(gt_signal:torch.Tensor, out_name:str, num_train:int = 1000, num_
 
 if __name__ == "__main__":
     print("Generating data")
-    signal = torch.tensor([1]*20+[0]*20+[1]*20, dtype=torch.int32)
+    signal = torch.tensor([0.5]*25+[-0.5]*25+[0.5]*25+[-0.5]*25, dtype=torch.float32)
     gen_dataset(signal, './datasets/steps.pt')
     print("Completed data generation")
