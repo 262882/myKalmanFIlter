@@ -1,23 +1,23 @@
 import torch
 import random
 
-def gen_dataset(gt_signal:torch.Tensor, out_name:str, num_train:int = 1000, num_cv:int = 100, num_test:int = 200, Q_mag=0.1):
-    
+def gen_dataset(gt_signal:torch.Tensor, out_name:str, num_train:int = 1000, num_cv:int = 100, num_test:int = 200, Q_mag=0.25):
+
     train_gt = gt_signal.repeat(num_train, 1, 1)
     for cnt, seq in enumerate(train_gt):
-        shift = random.randint(0, seq.shape[0])
+        shift = random.randint(0, seq.shape[1])
         train_gt[cnt] = torch.roll(seq, shift,dims=1)
     train_measure = torch.clone(train_gt) + Q_mag*(torch.rand_like(train_gt, dtype=torch.float32)-0.5)
 
     cv_gt = gt_signal.repeat(num_cv, 1, 1)
     for cnt, seq in enumerate(cv_gt):
-        shift = random.randint(0, seq.shape[0])
+        shift = random.randint(0, seq.shape[1])
         cv_gt[cnt] = torch.roll(seq, shift,dims=1)
     cv_measure = torch.clone(cv_gt) + Q_mag*(torch.rand_like(cv_gt, dtype=torch.float32)-0.5)
 
     test_gt = gt_signal.repeat(num_test, 1, 1)
     for cnt, seq in enumerate(test_gt):
-        shift = random.randint(0, seq.shape[0])
+        shift = random.randint(0, seq.shape[1])
         test_gt[cnt] = torch.roll(seq, shift,dims=1)
     test_measure = torch.clone(test_gt) + Q_mag*(torch.rand_like(test_gt, dtype=torch.float32)-0.5)
 
