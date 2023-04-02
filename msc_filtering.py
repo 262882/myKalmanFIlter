@@ -12,6 +12,7 @@ class MyKalmanFilterZeroOrder:
         self.xt_prev = 0  # previous time period
         self.xt_intr = 0  # intermediate time period
         self.xt_curr = xt_init  # current time period
+        self.yt_measure = 0
         
         # State covariances
         self.Pt_prev = 0  # previous time period
@@ -32,8 +33,10 @@ class MyKalmanFilterZeroOrder:
         
     def _correct(self, yt_measure):
         #print("Update")
+        self.yt_measure = yt_measure
         self.k_gain = self.Pt_intr/(self.Pt_intr+self.r_noise)
-        self.xt_curr = self.xt_intr + self.k_gain*(yt_measure-self.xt_intr)
+        self.inno = self.yt_measure-self.xt_intr
+        self.xt_curr = self.xt_intr + self.k_gain*(self.inno)
         self.Pt_curr = (1-self.k_gain)*self.Pt_intr
     
     def step(self, measurement: float):
@@ -52,6 +55,7 @@ class MyKalmanFilterHigherOrder:
         self.xt_prev = np.empty_like(xt_init)  # previous time period
         self.xt_intr = np.empty_like(xt_init)  # intermediate time period
         self.xt_curr = xt_init                 # current time period
+        self.yt_measure = 0
         
         # State covariances
         self.Pt_prev = np.empty_like(Pt_init)  # previous time period
@@ -80,8 +84,10 @@ class MyKalmanFilterHigherOrder:
         
     def _correct(self, yt_measure):
         #print("Correct")
+        self.yt_measure = yt_measure
         self.k_gain = self.Pt_intr@self.H_measure.T/(self.H_measure@self.Pt_intr@self.H_measure.T+self.r_noise)
-        self.xt_curr = self.xt_intr + self.k_gain*(yt_measure-self.H_measure@self.xt_intr)
+        self.inno = self.yt_measure-self.H_measure@self.xt_intr
+        self.xt_curr = self.xt_intr + self.k_gain*(self.inno)
         self.Pt_curr = (1-self.k_gain@self.H_measure)*self.Pt_intr
     
     def step(self, measurement: np.ndarray):
@@ -101,6 +107,7 @@ class MyKalmanFilterEKF:
         self.xt_prev = np.empty_like(xt_init)  # previous time period
         self.xt_intr = np.empty_like(xt_init)  # intermediate time period
         self.xt_curr = xt_init                 # current time period
+        self.yt_measure = 0
         
         # State covariances
         self.Pt_prev = np.empty_like(Pt_init)  # previous time period
@@ -131,8 +138,10 @@ class MyKalmanFilterEKF:
         
     def _correct(self, yt_measure):  
         #print("Correct")
+        self.yt_measure = yt_measure
         self.k_gain = self.Pt_intr@self.H_measure(self.xt_intr).T/(self.H_measure(self.xt_intr)@self.Pt_intr@self.H_measure(self.xt_intr).T+self.r_noise)
-        self.xt_curr = self.xt_intr + self.k_gain*(yt_measure-self.h_model(self.xt_intr))
+        self.inno = self.yt_measure-self.h_model(self.xt_intr)
+        self.xt_curr = self.xt_intr + self.k_gain*(self.inno)
         self.Pt_curr = (1-self.k_gain@self.H_measure(self.xt_intr))*self.Pt_intr
     
     def step(self, measurement: np.ndarray):
@@ -148,11 +157,15 @@ def run_filter(k_filter, measurements, timing=False):
     k_gain_list = []
     xt_curr_list = []
     Pt_curr_list = []
-
+    inno_list = []
+    update_list = []
+    observation_list = []
     
     time_start = time.perf_counter()
 
     for cnt, item in enumerate(measurements):
+
+        observation_list.append(item-k_filter.yt_measure)
         k_filter.step(item);
         
         xt_intr_list.append(k_filter.xt_intr)
@@ -160,10 +173,12 @@ def run_filter(k_filter, measurements, timing=False):
         k_gain_list.append(k_filter.k_gain)
         xt_curr_list.append(k_filter.xt_curr)
         Pt_curr_list.append(k_filter.Pt_curr)
+        inno_list.append(k_filter.inno)
+        update_list.append(k_filter.xt_curr-k_filter.xt_intr)
 
     if timing == True:
         speed = cnt/(time.perf_counter()-time_start)
         print('Frequency: ', speed, "Per second")
         
-    list_of_lists = [xt_intr_list,Pt_intr_list,k_gain_list,xt_curr_list,Pt_curr_list]
-    return pd.DataFrame(list(zip(*list_of_lists)), columns= ['xt_intr','Pt_intr','k_gain','xt_curr','Pt_curr'])
+    list_of_lists = [xt_intr_list,Pt_intr_list,k_gain_list,xt_curr_list,Pt_curr_list,inno_list,update_list,observation_list]
+    return pd.DataFrame(list(zip(*list_of_lists)), columns= ['xt_intr','Pt_intr','k_gain','xt_curr','Pt_curr','inno','update','obsv'])
